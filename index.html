@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,6 +23,61 @@
         <p>&copy; 2024 YourWebsite. All Rights Reserved.</p>
     </footer>
 
-    <script src="script.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js"></script>
+
+    <script>
+      // Your Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyCZQ_A8j6ZEdvXAqZtFZQ067OA_T-nQemQ",
+        authDomain: "file-download-1dd6c.firebaseapp.com",
+        projectId: "file-download-1dd6c",
+        storageBucket: "file-download-1dd6c.appspot.com",
+        messagingSenderId:"324375451725",
+        appId: "1:324375451725:web:d28384c0cecab6c951a404",
+      };
+
+      // Initialize Firebase
+      const app = firebase.initializeApp(firebaseConfig);
+      const storage = firebase.storage();
+
+      // File upload logic
+      const fileInput = document.getElementById('fileInput');
+      const preview = document.getElementById('preview');
+
+      fileInput.addEventListener('change', (event) => {
+        const files = event.target.files;
+        Array.from(files).forEach(file => {
+          const storageRef = storage.ref(`uploads/${file.name}`);
+          
+          storageRef.put(file).then(() => {
+            storageRef.getDownloadURL().then((url) => {
+              const link = document.createElement('a');
+              link.href = url;
+              link.textContent = `Download ${file.name}`;
+              link.target = '_blank';
+
+              const shareInput = document.createElement('input');
+              shareInput.type = 'text';
+              shareInput.value = url;
+              shareInput.readOnly = true;
+
+              const copyButton = document.createElement('button');
+              copyButton.textContent = 'Copy Link';
+              copyButton.addEventListener('click', () => {
+                shareInput.select();
+                document.execCommand('copy');
+                alert('Link copied to clipboard!');
+              });
+
+              preview.appendChild(link);
+              preview.appendChild(shareInput);
+              preview.appendChild(copyButton);
+            });
+          }).catch(error => console.error('Error uploading file:', error));
+        });
+      });
+    </script>
 </body>
 </html>
