@@ -2,10 +2,16 @@ const fileInput = document.getElementById('fileInput');
 const preview = document.getElementById('preview');
 
 // Create a loading indicator
-const loadingMessage = document.createElement('p');
-loadingMessage.textContent = 'Uploading... Please wait.';
-loadingMessage.style.display = 'none'; // Initially hidden
-preview.appendChild(loadingMessage);
+const loadingSpinner = document.createElement('div');
+loadingSpinner.className = 'loading-spinner';
+loadingSpinner.style.display = 'none';
+preview.appendChild(loadingSpinner);
+
+// Show the spinner during upload
+loadingSpinner.style.display = 'block';
+
+// Hide the spinner after upload completes
+loadingSpinner.style.display = 'none';
 
 // Handle file input change event
 fileInput.addEventListener('change', (event) => {
