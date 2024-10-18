@@ -1,34 +1,51 @@
 const fileInput = document.getElementById('fileInput');
 const preview = document.getElementById('preview');
 
+// Create a loading indicator
+const loadingMessage = document.createElement('p');
+loadingMessage.textContent = 'Uploading... Please wait.';
+loadingMessage.style.display = 'none'; // Initially hidden
+preview.appendChild(loadingMessage);
+
 // Handle file input change event
 fileInput.addEventListener('change', (event) => {
-  const files = event.target.files;  // Get uploaded files
+  const files = event.target.files;
 
-  // Loop through all selected files
+  // Clear the preview section and show loading message
+  preview.innerHTML = '';
+  preview.appendChild(loadingMessage);
+  loadingMessage.style.display = 'block';
+
+  // Disable the file input while uploading
+  fileInput.disabled = true;
+
   Array.from(files).forEach((file) => {
-    const storageRef = firebase.storage().ref(`uploads/${file.name}`);  // Set Firebase storage path
+    const storageRef = firebase.storage().ref(`uploads/${file.name}`);
 
-    // Upload the file to Firebase Storage
-    storageRef.put(file).then(() => {
-      console.log(`${file.name} uploaded successfully!`);
+    // Start uploading the file
+    storageRef.put(file)
+      .then(() => {
+        console.log(`${file.name} uploaded successfully!`);
 
-      // Get the download URL after upload
-      storageRef.getDownloadURL().then((url) => {
+        // Get the download URL after upload completes
+        return storageRef.getDownloadURL();
+      })
+      .then((url) => {
         console.log(`Download URL: ${url}`);
 
         // Create a download link
         const link = document.createElement('a');
         link.href = url;
         link.textContent = `Download ${file.name}`;
-        link.target = '_blank';  // Open in a new tab
+        link.target = '_blank';
 
-        // Optional: Add a copyable input with the download link
+        // Create a shareable input field
         const shareInput = document.createElement('input');
         shareInput.type = 'text';
         shareInput.value = url;
         shareInput.readOnly = true;
 
+        // Create a copy button
         const copyButton = document.createElement('button');
         copyButton.textContent = 'Copy Link';
         copyButton.addEventListener('click', () => {
@@ -37,17 +54,21 @@ fileInput.addEventListener('change', (event) => {
           alert('Download link copied to clipboard!');
         });
 
-        // Append everything to the preview section
+        // Append the download link and input field to the preview section
         preview.appendChild(link);
-        preview.appendChild(document.createElement('br'));  // Line break
+        preview.appendChild(document.createElement('br'));
         preview.appendChild(shareInput);
         preview.appendChild(copyButton);
-        preview.appendChild(document.createElement('hr'));  // Divider for each file
-      }).catch((error) => {
-        console.error('Error getting download URL:', error);
+        preview.appendChild(document.createElement('hr'));
+      })
+      .catch((error) => {
+        console.error('Error uploading or getting download URL:', error);
+        alert('Failed to upload or generate download link. Please check the console for more details.');
+      })
+      .finally(() => {
+        // Re-enable the file input and hide the loading message
+        fileInput.disabled = false;
+        loadingMessage.style.display = 'none';
       });
-    }).catch((error) => {
-      console.error('Error uploading file:', error);
-    });
   });
 });
