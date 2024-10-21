@@ -1,98 +1,73 @@
+// script.js
+
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyCZQ_A8j6ZEdvXAqZtFZQ067OA_T-nQemQ",
+    authDomain: "file-download-1dd6c.firebaseapp.com",
+    projectId: "file-download-1dd6c",
+    storageBucket: "file-download-1dd6c.appspot.com",
+    messagingSenderId: "324375451725",
+    appId: "1:324375451725:web:d28384c0cecab6c951a404"
+};
+
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const storage = firebase.storage();
+
+// DOM Elements
 const fileInput = document.getElementById('fileInput');
 const preview = document.getElementById('preview');
 
+// Create loading spinner element
+const loadingSpinner = document.createElement('div');
+loadingSpinner.className = 'loading-spinner hidden';
+preview.appendChild(loadingSpinner);
 
-
-  // Create the loading spinner and loading message
-  const loadingSpinner = document.createElement('div');
-  loadingSpinner.className = 'loading-spinner hidden'; // Hide initially
-
-  const loadingMessage = document.createElement('p');
-  loadingMessage.textContent = 'Uploading...';
-  loadingMessage.className = 'hidden';
-
-  preview.appendChild(loadingSpinner);
-  preview.appendChild(loadingMessage);
-
-  // Handle file input change event
-  fileInput.addEventListener('change', (event) => {
+// File input change event listener
+fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
+    preview.innerHTML = ''; // Clear previous content
+    preview.appendChild(loadingSpinner); // Add spinner
+    loadingSpinner.classList.remove('hidden'); // Show spinner
 
-    // Clear the preview section and show the loading spinner and message
-    preview.innerHTML = '';
-    preview.appendChild(loadingSpinner);
-    preview.appendChild(loadingMessage);
+    Array.from(files).forEach(file => {
+        const storageRef = storage.ref(`uploads/${file.name}`);
 
-    loadingSpinner.classList.remove('hidden');
-    loadingMessage.classList.remove('hidden');
-    fileInput.disabled = true;
+        // Upload file to Firebase storage
+        storageRef.put(file).then(() => {
+            // Get the download URL after upload
+            return storageRef.getDownloadURL();
+        }).then((url) => {
+            // Hide the spinner once upload is complete
+            loadingSpinner.classList.add('hidden');
 
-    // Simulate an upload process
-    setTimeout(() => {
-      // Hide the spinner and message after "upload"
-      loadingSpinner.classList.add('hidden');
-      loadingMessage.classList.add('hidden');
-      fileInput.disabled = false;
+            // Create elements for the uploaded file
+            const link = document.createElement('a');
+            link.href = url;
+            link.textContent = `Download ${file.name}`;
+            link.target = '_blank';
 
-      // Display a preview of the uploaded files
-      Array.from(files).forEach(file => {
-        const fileElement = document.createElement('p');
-        fileElement.textContent = `Uploaded: ${file.name}`;
-        preview.appendChild(fileElement);
-      });
-    }, 3000); // Simulate a 3-second upload delay
-  });
+            const shareInput = document.createElement('input');
+            shareInput.type = 'text';
+            shareInput.value = url;
+            shareInput.readOnly = true;
 
-  Array.from(files).forEach((file) => {
-    const storageRef = firebase.storage().ref(`uploads/${file.name}`);
+            const copyButton = document.createElement('button');
+            copyButton.textContent = 'Copy Link';
+            copyButton.addEventListener('click', () => {
+                shareInput.select();
+                document.execCommand('copy');
+                alert('Link copied to clipboard!');
+            });
 
-    // Start uploading the file
-    storageRef.put(file)
-      .then(() => {
-        console.log(`${file.name} uploaded successfully!`);
-
-        // Get the download URL after upload completes
-        return storageRef.getDownloadURL();
-      })
-      .then((url) => {
-        console.log(`Download URL: ${url}`);
-
-        // Create a download link
-        const link = document.createElement('a');
-        link.href = url;
-        link.textContent = `Download ${file.name}`;
-        link.target = '_blank';
-
-        // Create a shareable input field
-        const shareInput = document.createElement('input');
-        shareInput.type = 'text';
-        shareInput.value = url;
-        shareInput.readOnly = true;
-
-        // Create a copy button
-        const copyButton = document.createElement('button');
-        copyButton.textContent = 'Copy Link';
-        copyButton.addEventListener('click', () => {
-          shareInput.select();
-          document.execCommand('copy');
-          alert('Download link copied to clipboard!');
+            // Append elements to the preview
+            preview.appendChild(link);
+            preview.appendChild(shareInput);
+            preview.appendChild(copyButton);
+        }).catch((error) => {
+            console.error('Error uploading file:', error);
+            alert('Upload failed. Please try again.');
+            loadingSpinner.classList.add('hidden'); // Hide spinner on error
         });
-
-        // Append the download link and input field to the preview section
-        preview.appendChild(link);
-        preview.appendChild(document.createElement('br'));
-        preview.appendChild(shareInput);
-        preview.appendChild(copyButton);
-        preview.appendChild(document.createElement('hr'));
-      })
-      .catch((error) => {
-        console.error('Error uploading or getting download URL:', error);
-        alert('Failed to upload or generate download link. Please check the console for more details.');
-      })
-      .finally(() => {
-        // Re-enable the file input and hide the loading message
-        fileInput.disabled = false;
-        loadingMessage.style.display = 'none';
-      });
-  });
+    });
 });
