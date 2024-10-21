@@ -1,29 +1,47 @@
 const fileInput = document.getElementById('fileInput');
 const preview = document.getElementById('preview');
 
-// Create a loading indicator
-const loadingSpinner = document.createElement('div');
-loadingSpinner.className = 'loading-spinner';
-loadingSpinner.style.display = 'none';
-preview.appendChild(loadingSpinner);
 
-// Show the spinner during upload
-loadingSpinner.style.display = 'block';
 
-// Hide the spinner after upload completes
-loadingSpinner.style.display = 'none';
+  // Create the loading spinner and loading message
+  const loadingSpinner = document.createElement('div');
+  loadingSpinner.className = 'loading-spinner hidden'; // Hide initially
 
-// Handle file input change event
-fileInput.addEventListener('change', (event) => {
-  const files = event.target.files;
+  const loadingMessage = document.createElement('p');
+  loadingMessage.textContent = 'Uploading...';
+  loadingMessage.className = 'hidden';
 
-  // Clear the preview section and show loading message
-  preview.innerHTML = '';
+  preview.appendChild(loadingSpinner);
   preview.appendChild(loadingMessage);
-  loadingMessage.style.display = 'block';
 
-  // Disable the file input while uploading
-  fileInput.disabled = true;
+  // Handle file input change event
+  fileInput.addEventListener('change', (event) => {
+    const files = event.target.files;
+
+    // Clear the preview section and show the loading spinner and message
+    preview.innerHTML = '';
+    preview.appendChild(loadingSpinner);
+    preview.appendChild(loadingMessage);
+
+    loadingSpinner.classList.remove('hidden');
+    loadingMessage.classList.remove('hidden');
+    fileInput.disabled = true;
+
+    // Simulate an upload process
+    setTimeout(() => {
+      // Hide the spinner and message after "upload"
+      loadingSpinner.classList.add('hidden');
+      loadingMessage.classList.add('hidden');
+      fileInput.disabled = false;
+
+      // Display a preview of the uploaded files
+      Array.from(files).forEach(file => {
+        const fileElement = document.createElement('p');
+        fileElement.textContent = `Uploaded: ${file.name}`;
+        preview.appendChild(fileElement);
+      });
+    }, 3000); // Simulate a 3-second upload delay
+  });
 
   Array.from(files).forEach((file) => {
     const storageRef = firebase.storage().ref(`uploads/${file.name}`);
