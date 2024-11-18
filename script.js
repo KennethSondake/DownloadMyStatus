@@ -27,19 +27,29 @@ preview.appendChild(loadingSpinner);
 fileInput.addEventListener('change', (event) => {
     const files = event.target.files;
     preview.innerHTML = ''; // Clear previous content
-    preview.appendChild(loadingSpinner); // Add spinner
-    loadingSpinner.classList.remove('hidden'); // Show spinner
 
-    Array.from(files).forEach(file => {
-        const storageRef = storage.ref(`uploads/${file.name}`);
+    if (files.length === 0) {
+        preview.innerHTML = '<p>No files uploaded yet.</p>';
+        return;
+    }
+
+    Array.from(files).forEach((file) => {
+        const storageRef = ref(storage, `uploads/${file.name}`);
+        const fileDiv = document.createElement('div'); // Wrap each file's preview
+        preview.appendChild(fileDiv);
+
+        // Show loading spinner
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner';
+        fileDiv.appendChild(spinner);
 
         // Upload file to Firebase storage
-        storageRef.put(file).then(() => {
+        uploadBytes(storageRef, file).then(() => {
             // Get the download URL after upload
-            return storageRef.getDownloadURL();
+            return getDownloadURL(storageRef);
         }).then((url) => {
-            // Hide the spinner once upload is complete
-            loadingSpinner.classList.add('hidden');
+            // Hide spinner
+            spinner.remove();
 
             // Create elements for the uploaded file
             const link = document.createElement('a');
@@ -60,14 +70,16 @@ fileInput.addEventListener('change', (event) => {
                 alert('Link copied to clipboard!');
             });
 
-            // Append elements to the preview
-            preview.appendChild(link);
-            preview.appendChild(shareInput);
-            preview.appendChild(copyButton);
+            // Append elements to the file preview
+            fileDiv.appendChild(link);
+            fileDiv.appendChild(shareInput);
+            fileDiv.appendChild(copyButton);
         }).catch((error) => {
             console.error('Error uploading file:', error);
             alert('Upload failed. Please try again.');
-            loadingSpinner.classList.add('hidden'); // Hide spinner on error
+
+            // Remove spinner
+            spinner.remove();
         });
     });
 });
